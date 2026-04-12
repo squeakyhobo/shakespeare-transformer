@@ -7,19 +7,37 @@ from time import sleep
 
 
 class Bigram(nn.Module):
-    def __init__(self,vocab_size,chars):
+    def __init__(self,vocab_size,chars,temprature,num_embed,block_size):
         super().__init__()
-        self.vocab_embedding_table = nn.Embedding(vocab_size,vocab_size)
+        
+        self.vocab_embedding_table = nn.Embedding(vocab_size,num_embed)
+        self.positon_embedding = nn.Embedding(block_size,num_embed)
+        self.lm_head = nn.Linear(num_embed,vocab_size)
+
         self.encoding_paring ={}
         self.decoding_paring ={}
-        self.temprature =1.2
+        self.temprature =temprature
+        self.block_size = block_size
 
         for encoding,char in enumerate(chars):
             self.encoding_paring[char] = encoding
             self.decoding_paring[encoding] = char
 
     def forward(self,idx):
-        logits = self.vocab_embedding_table(idx) # raw data not normalised
+
+        B, T = idx.shape
+        positions = torch.arange(T)
+
+        pos_embed = self.positon_embedding(positions)
+        token_embed = self.vocab_embedding_table(idx) 
+        
+        
+        x = token_embed + pos_embed
+        
+        
+
+
+        logits = self.lm_head(x)
         return logits
     
    
@@ -45,8 +63,8 @@ class Bigram(nn.Module):
         while True:
             
             
-            
-            logits = self(idx)
+            idx_cropped =idx[:, -self.block_size:]
+            logits = self(idx_cropped)
             logits = logits[:, -1, :]/self.temprature
             probs = F.softmax(logits,dim =-1)
             

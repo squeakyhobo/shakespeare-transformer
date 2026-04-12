@@ -16,6 +16,8 @@ batch_size = 32
 learning_rate = 10e-3
 train_iterations = 1000
 eval_iterations = 500
+temprature =1.0
+number_embeddings = 32
 
 
 
@@ -58,7 +60,7 @@ def get_batch(data):
 def main():
 
 
-    model = Bigram(chars=chars,vocab_size=vocab_size) # init model
+    model = Bigram(chars=chars,vocab_size=vocab_size,num_embed=number_embeddings,temprature=temprature,block_size=block_size) # init model
     model.to(device)
 
     data = torch.tensor(model.encode(text), dtype=torch.long)  #encode whole dataset
