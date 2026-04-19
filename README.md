@@ -1,2 +1,1 @@
-# Bigram Model
 
