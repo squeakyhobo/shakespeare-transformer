@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 import torch
 import torch.nn.functional as F
 from src.Transformer import Transformer
+from src.cli_interface import CLI_Interface
 
 load_dotenv()
 
@@ -46,18 +47,7 @@ def get_batch(data):
     x = torch.stack([data[i:i+block_size] for i in ix])
     y = torch.stack([data[i+1:i+block_size+1] for i in ix])
     return x.to(device), y.to(device)
-
-def main():
-    # Initialize model with original chars to maintain consistency
-    model = Transformer(
-        chars=chars, 
-        temperature=temperature, 
-        num_embeddings=number_embeddings, 
-        block_size=block_size, 
-        num_heads=num_heads, 
-        dropout_rate=dropout_rate
-    )
-
+def train(model):
     # If fine-tuning, load the pre-trained weights first
     if FINETUNE:
         pre_trained_path = "transformer_model.pth"
@@ -97,9 +87,28 @@ def main():
     save_path = "fine_tuned_transformer.pth" if FINETUNE else "transformer_model.pth"
     torch.save(model.state_dict(), save_path)
     print(f"Saved weights to {save_path}")
+def main():
+    # Initialize model with original chars to maintain consistency
+    model = Transformer(
+        chars=chars, 
+        temperature=temperature, 
+        num_embeddings=number_embeddings, 
+        block_size=block_size, 
+        num_heads=num_heads, 
+        dropout_rate=dropout_rate
+    )
+
+    model.load_state_dict(torch.load('fine_tuned_transformer.pth', map_location=device))
+ 
+
+
+    
 
     print("\nGenerating text:")
-    model.generate()
+    #model.generate()
+    cli = CLI_Interface(model)
+    cli.interact()
+
 
 if __name__ == "__main__":
     main()

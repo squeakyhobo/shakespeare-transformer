@@ -102,11 +102,14 @@ class Transformer(nn.Module):
         logits = self.lm_head(x)
         return logits
 
-    def generate(self):
+    def generate(self,prompt = None):
         self.eval()
         # Find the device the model is currently on
         device = next(self.parameters()).device
-        idx = torch.zeros((1, 1), dtype=torch.long, device=device)
+        if(prompt!=None):
+            idx = torch.tensor(self.encode(prompt), dtype=torch.long, device=device).unsqueeze(0) #add extra dim for batch
+        else:
+            idx = torch.zeros((1, 1), dtype=torch.long, device=device)
         
         with torch.no_grad():
             while True:
@@ -117,6 +120,8 @@ class Transformer(nn.Module):
                 index = torch.multinomial(probs, num_samples=1)
                 
                 output = self.decoding_pairing.get(index.item())
+                if output is None: # handle potential unknown characters or index out of bounds
+                    break
                 idx = torch.cat((idx, index), dim=1)
                 print(output, end="", flush=True)
                 sleep(0.05)
